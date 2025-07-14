@@ -3,6 +3,9 @@ import { todos } from '~/server/db/schema';
 
 export default defineEventHandler(async (event) => {
     const body = await readBody(event);
-    const [newTodo] = await db.insert(todos).values({ text: body.text }).returning();
+    const [newTodo] = await db.insert(todos).values({
+        text: body.text,
+        priority: body.priority || 'medium'
+    }).returning();
     return newTodo;
 });
