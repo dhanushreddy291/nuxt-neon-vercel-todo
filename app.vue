@@ -6,14 +6,26 @@
       automated database branching.
     </p>
     <form @submit.prevent="addTodo">
-      <input v-model="newTodoText" placeholder="Add a new todo item" required />
-      <button type="submit">Add Todo</button>
+      <div class="form-row">
+        <input v-model="newTodoText" placeholder="Add a new todo item" required />
+        <select v-model="newTodoPriority" class="priority-select">
+          <option value="low">Low Priority</option>
+          <option value="medium">Medium Priority</option>
+          <option value="high">High Priority</option>
+        </select>
+        <button type="submit">Add Todo</button>
+      </div>
     </form>
     <ul>
-      <li v-for="todo in todos" :key="todo.id">
-        <span :class="{ completed: todo.completed }" @click="toggleTodo(todo)">
-          {{ todo.text }}
-        </span>
+      <li v-for="todo in todos" :key="todo.id" :class="`priority-${todo.priority}`">
+        <div class="todo-content">
+          <span :class="{ completed: todo.completed }" @click="toggleTodo(todo)">
+            {{ todo.text }}
+          </span>
+          <span class="priority-badge" :class="`priority-${todo.priority}`">
+            {{ todo.priority }}
+          </span>
+        </div>
         <button class="remove-btn" @click="removeTodo(todo)">Remove</button>
       </li>
     </ul>
@@ -23,14 +35,19 @@
 <script setup>
 const { data: todos, refresh } = await useFetch('/api/todos');
 const newTodoText = ref('');
+const newTodoPriority = ref('medium');
 
 const addTodo = async () => {
   if (!newTodoText.value.trim()) return;
   await $fetch('/api/todos', {
     method: 'POST',
-    body: { text: newTodoText.value },
+    body: {
+      text: newTodoText.value,
+      priority: newTodoPriority.value,
+    },
   });
   newTodoText.value = '';
+  newTodoPriority.value = 'medium';
   await refresh();
 };
 
@@ -73,14 +90,25 @@ p {
   margin-bottom: 2rem;
 }
 form {
-  display: flex;
   margin-bottom: 1rem;
+}
+.form-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
 }
 input {
   flex-grow: 1;
   padding: 0.75rem;
   border: 1px solid #ccc;
   border-radius: 4px;
+}
+.priority-select {
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+  min-width: 140px;
 }
 button {
   padding: 0.75rem 1.5rem;
@@ -89,7 +117,6 @@ button {
   color: white;
   border-radius: 4px;
   cursor: pointer;
-  margin-left: 0.5rem;
 }
 ul {
   list-style: none;
@@ -101,6 +128,22 @@ li {
   align-items: center;
   padding: 0.75rem;
   border-bottom: 1px solid #eee;
+  border-left: 4px solid #ddd;
+}
+li.priority-high {
+  border-left-color: #ff4444;
+}
+li.priority-medium {
+  border-left-color: #ffaa00;
+}
+li.priority-low {
+  border-left-color: #44ff44;
+}
+.todo-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-grow: 1;
 }
 li span {
   cursor: pointer;
@@ -108,6 +151,26 @@ li span {
 .completed {
   text-decoration: line-through;
   color: #aaa;
+}
+.priority-badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  text-transform: uppercase;
+  font-weight: bold;
+  cursor: default !important;
+}
+.priority-badge.priority-high {
+  background-color: #ffe6e6;
+  color: #cc0000;
+}
+.priority-badge.priority-medium {
+  background-color: #fff3e0;
+  color: #e65100;
+}
+.priority-badge.priority-low {
+  background-color: #e8f5e8;
+  color: #2e7d32;
 }
 .remove-btn {
   background-color: #ff4d4d;
